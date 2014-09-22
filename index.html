@@ -1,0 +1,162 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>RNA</title>
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+		<style type="text/css">
+			html, body{
+				margin: 0;
+				padding: 0;
+				font-family: Verdana, sans-serif;
+				background: #F5F7FF;
+				color: #4D527F;
+			}
+			h1{
+				width: 100%;
+				text-align: center;
+			}
+			ul{
+				list-style: none;
+				text-align: center;
+				margin: 0;
+				padding: 5px 0;
+				border-bottom: 1px solid #4D527F;
+			}
+			ul li{
+				display: inline-block;
+				padding: 3px;
+			}
+			ul li a{
+				display: block;
+				padding: 5px 10px;
+				text-decoration: none;
+				background: #4D527F;
+				color: white;
+				font-weight: bold;
+			}
+			ul li a:hover{
+				background: #1D297F;
+			}
+		</style>
+
+		<script type="text/javascript">
+			function neuronio (entradas, bias, funcao, pontosDisc, b) {
+				if(entradas != null){
+					//variaveis para plotagem
+					var valores = {}, valoresY = [], valoresX = [];
+
+					//dividir os pontos de discretizacao
+					for(var i = 0; i < pontosDisc; i++){
+						var potencialDeAtivacao = 0;
+						var ents = Object.keys(entradas);
+						for(var e in ents){
+							var entrada = entradas[ents[e]];
+							var valorDaEntrada = (entrada.max - entrada.min) * i / pontosDisc;
+							potencialDeAtivacao += valorDaEntrada * entrada.peso;
+
+							if(valoresX.indexOf(valorDaEntrada) == -1){
+								valoresX = valoresX.concat(valorDaEntrada);
+							}
+						}
+						potencialDeAtivacao -= bias;
+						var y = funcao(potencialDeAtivacao, b);
+						valoresY = valoresY.concat(y);
+					}
+
+					print(functionName(funcao) + " - " + getEntradaString(entradas) + " - bias: " + bias, valoresX, valoresY);
+				}else{
+					alert("preencha a entrada!");
+				}
+			}
+
+			function logistica(u, b){
+				return 1/(1+Math.pow(Math.E, u*b*-1));
+			}
+
+			function tangenteHiperbolica(u, b){
+				return (1-Math.pow(Math.E, u*b*-1))/(1+Math.pow(Math.E, u*b*-1));
+			}
+
+			function getEntradaString(entradas){
+				var ret = ""
+				var ents = Object.keys(entradas);
+				for(var e in ents){
+					var entrada = entradas[ents[e]];
+					ret += ents[e] + ": [" + entrada.min + ", " + entrada.max + "] - peso(" + ents[e] + "): " + entrada.peso + ";  ";
+				}
+				return ret;
+			}
+
+			function functionName(fun) {
+				var ret = fun.toString();
+				ret = ret.substr('function '.length);
+				ret = ret.substr(0, ret.indexOf('('));
+				return ret;
+			}
+
+			function print (title, valoresX, valoresY) {
+				var param = {
+					title: {
+			            text: title,
+			            x: -20 //center
+			        },
+			        chart: {
+			        	backgroundColor: "#F5F7FF"
+			        },
+			        xAxis: {
+			            categories: valoresX
+			        },
+			        yAxis: {
+			            title: {
+			                text: 'Valor de Saída (y)'
+			            },
+			            plotLines: [{
+			                value: 0,
+			                width: 1,
+			                color: '#808080'
+			            }]
+			        },
+			        legend: {
+			            layout: 'vertical',
+			            align: 'right',
+			            verticalAlign: 'middle',
+			            borderWidth: 0
+			        },
+			        series: [{
+			            name: 'Valor Discretizado',
+			            data: valoresY,
+			            lineColor: '#4D527F',
+			            color: '#4D527F'
+			        }]
+			    };
+			    $(function () {
+				    $('#container').highcharts(param);
+				});
+			}
+		</script>
+	</head>
+	<body>
+		<script src="./js/highcharts.js"></script>
+		<script src="./js/modules/exporting.js"></script>
+
+		<h1>Lista de Exercícios 01 - Questão 02</h1>
+		<ul>
+			<li>Letra:</li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.1}}, 0, logistica, 20, 1);">A</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.5}}, 0, logistica, 20, 1);">B</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.9}}, 0, logistica, 20, 1);">C</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.1}}, 0, tangenteHiperbolica, 20, 1);">D</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.5}}, 0, tangenteHiperbolica, 20, 1);">E</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.9}}, 0, tangenteHiperbolica, 20, 1);">F</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.1}, x2: {min: 0, max: 1, peso: 0.7}}, 0, logistica, 20, 1);">G</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.5}, x2: {min: 0, max: 1, peso: 0.5}}, 0, logistica, 20, 1);">H</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.7}, x2: {min: 0, max: 1, peso: 0.1}}, 0, logistica, 20, 1);">I</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.1}, x2: {min: 0, max: 1, peso: 0.7}}, 0.25, logistica, 20, 1);">J</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.5}, x2: {min: 0, max: 1, peso: 0.5}}, 0.25, logistica, 20, 1);">K</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.7}, x2: {min: 0, max: 1, peso: 0.1}}, 0.25, logistica, 20, 1);">L</a></li>
+		</ul>
+
+		<div id="container" style="min-width: 310px; height: 400px; margin: 30px auto;"></div>
+	</body>
+</html>
