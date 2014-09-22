@@ -41,7 +41,7 @@
 		</style>
 
 		<script type="text/javascript">
-			function neuronio (entradas, bias, funcao, pontosDisc, b) {
+			function neuronio (entradas, bias, funcao, pontosDisc, b, questao) {
 				if(entradas != null){
 					//variaveis para plotagem
 					var valores = {}, valoresY = [], valoresX = [];
@@ -64,7 +64,7 @@
 						valoresY = valoresY.concat(y);
 					}
 
-					print(functionName(funcao) + " - " + getEntradaString(entradas) + " - bias: " + bias, valoresX, valoresY);
+					print(questao + " -> " + functionName(funcao) + " - " + getEntradaString(entradas) + " - bias: " + bias, valoresX, valoresY);
 				}else{
 					alert("preencha a entrada!");
 				}
@@ -124,7 +124,7 @@
 			            borderWidth: 0
 			        },
 			        series: [{
-			            name: 'Valor Discretizado',
+			            name: 'Valor',
 			            data: valoresY,
 			            lineColor: '#4D527F',
 			            color: '#4D527F'
@@ -143,18 +143,18 @@
 		<h1>Lista de Exercícios 01 - Questão 02</h1>
 		<ul>
 			<li>Letra:</li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.1}}, 0, logistica, 20, 1);">A</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.5}}, 0, logistica, 20, 1);">B</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.9}}, 0, logistica, 20, 1);">C</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.1}}, 0, tangenteHiperbolica, 20, 1);">D</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.5}}, 0, tangenteHiperbolica, 20, 1);">E</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.9}}, 0, tangenteHiperbolica, 20, 1);">F</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.1}, x2: {min: 0, max: 1, peso: 0.7}}, 0, logistica, 20, 1);">G</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.5}, x2: {min: 0, max: 1, peso: 0.5}}, 0, logistica, 20, 1);">H</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.7}, x2: {min: 0, max: 1, peso: 0.1}}, 0, logistica, 20, 1);">I</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.1}, x2: {min: 0, max: 1, peso: 0.7}}, 0.25, logistica, 20, 1);">J</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.5}, x2: {min: 0, max: 1, peso: 0.5}}, 0.25, logistica, 20, 1);">K</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.7}, x2: {min: 0, max: 1, peso: 0.1}}, 0.25, logistica, 20, 1);">L</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.1}}, 0, logistica, 20, 1, 'A');">A</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.5}}, 0, logistica, 20, 1, 'B');">B</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.9}}, 0, logistica, 20, 1, 'C');">C</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.1}}, 0, tangenteHiperbolica, 20, 1, 'D');">D</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.5}}, 0, tangenteHiperbolica, 20, 1, 'E');">E</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.9}}, 0, tangenteHiperbolica, 20, 1, 'F');">F</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.1}, x2: {min: 0, max: 1, peso: 0.7}}, 0, logistica, 20, 1, 'G');">G</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.5}, x2: {min: 0, max: 1, peso: 0.5}}, 0, logistica, 20, 1, 'H');">H</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.7}, x2: {min: 0, max: 1, peso: 0.1}}, 0, logistica, 20, 1, 'I');">I</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.1}, x2: {min: 0, max: 1, peso: 0.7}}, 0.25, logistica, 20, 1, 'J');">J</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.5}, x2: {min: 0, max: 1, peso: 0.5}}, 0.25, logistica, 20, 1, 'K');">K</a></li>
+			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.7}, x2: {min: 0, max: 1, peso: 0.1}}, 0.25, logistica, 20, 1, 'L');">L</a></li>
 		</ul>
 
 		<div id="container" style="min-width: 310px; height: 400px; margin: 30px auto;"></div>
