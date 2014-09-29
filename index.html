@@ -41,33 +41,111 @@
 		</style>
 
 		<script type="text/javascript">
-			function neuronio (entradas, bias, funcao, pontosDisc, b, questao) {
-				if(entradas != null){
-					//variaveis para plotagem
-					var valores = {}, valoresY = [], valoresX = [];
 
-					//dividir os pontos de discretizacao
-					for(var i = 0; i < pontosDisc; i++){
-						var potencialDeAtivacao = 0;
-						var ents = Object.keys(entradas);
-						for(var e in ents){
-							var entrada = entradas[ents[e]];
-							var valorDaEntrada = (entrada.max - entrada.min) * i / pontosDisc;
-							potencialDeAtivacao += valorDaEntrada * entrada.peso;
+			var MIN = 0, MAX = 1;
 
-							if(valoresX.indexOf(valorDaEntrada) == -1){
-								valoresX = valoresX.concat(valorDaEntrada);
-							}
-						}
-						potencialDeAtivacao -= bias;
-						var y = funcao(potencialDeAtivacao, b);
-						valoresY = valoresY.concat(y);
-					}
+			function RNA_exec(entradas, neuronios, pontosDisc, b, descricao){
+				var neuronios_array_nomes = Object.keys(neuronios);
 
-					print(questao + " -> " + functionName(funcao) + " - " + getEntradaString(entradas) + " - bias: " + bias, valoresX, valoresY);
-				}else{
-					alert("preencha a entrada!");
+				//discretizar valores das entradas
+				var valores_entrada = [], 
+					valores_variacao = (MAX - MIN) / pontosDisc;
+				for(var i = 0; i <= pontosDisc; i++){
+					valores_entrada.push(parseFloat((valores_variacao * i).toFixed(4)));
 				}
+
+				//iterar sobre as entradas, de forma que cada uma seja executado pela rede neural
+				var entradas_array_nomes = Object.keys(entradas), 
+					entradas_count = entradas_array_nomes.length,
+					entradas_computadas = [];
+				for(var e1 in entradas_array_nomes){
+					for(var v1 in valores_entrada){
+						var entrada_nome1 = entradas_array_nomes[e1], 
+							entrada1 = entradas[entrada_nome1],
+							valor1 = valores_entrada[v1];
+						
+						for(var e2 in entradas_array_nomes){
+							
+							if(e2 != e1){
+								for(var v2 in valores_entrada){
+									var entrada_nome2 = entradas_array_nomes[e2],
+										entrada2 = entradas[entrada_nome2],
+										valor2 = valores_entrada[v2];
+
+										if(entradas_computadas.indexOf(entrada_nome1+valor1+entrada_nome2+valor2) == -1){
+											entradas_computadas.push(entrada_nome1+valor1+entrada_nome2+valor2);
+											entradas_computadas.push(entrada_nome2+valor2+entrada_nome1+valor1);
+											
+											//entradas com seus valores
+											var ent = {};
+											ent[entrada_nome1] = {valor: valor1};
+											ent[entrada_nome2] = {valor: valor2};
+
+											//neuronios com seus pesos sinapticos e limiar
+											var neu = {};
+											for(var n in neuronios_array_nomes){
+												var neuronio_nome = neuronios_array_nomes[n],
+													neuronio = neuronios[neuronio_nome];
+
+												neuronio.limiar = getRandomNumber(-1,1);
+												for(var p in neuronio.pesos){
+													neuronio.pesos[p] = getRandomNumber(-1,1);
+												}
+
+												neu[neuronio_nome] = neuronio;
+											}
+											RNA(ent, neu, b);
+										}
+								}
+							}
+
+						}
+					}
+				}
+
+				//limpeza de memoria
+				entradas_computadas = [];
+
+				//print(questao + " -> " + functionName(funcao) + " - " + getEntradaString(entradas) + " - bias: " + bias, valoresX, valoresY);
+			}
+
+			function RNA (entradas, neuronios, b){
+				var entradas_array_nomes = Object.keys(entradas),
+					neuronios_array_nomes = Object.keys(neuronios),
+					neuronios_size = neuronios_array_nomes.length,
+					saidas = {};
+
+				for(var n in neuronios_array_nomes){
+					var neuronio_nome = neuronios_array_nomes[n],
+						neuronio = neuronios[neuronio_nome];
+					if(neuronio.saida == true){
+						saidas[neuronio_nome] = neuronio_func(neuronio, b, entradas, neuronios);
+					}
+				}
+
+				console.log(entradas, saidas);
+			}
+
+			function neuronio_func(neuronio, b, entradas, neuronios){
+				var entradas_array_nomes = Object.keys(entradas), 
+					pesos_neuronio = Object.keys(neuronio.pesos),
+					pesos_sao_entradas = true;
+
+				for(var p in pesos_neuronio){
+					pesos_sao_entradas = entradas_array_nomes.indexOf(pesos_neuronio[p]) != -1 ? pesos_sao_entradas && true : false;
+				}
+
+				var potencialDeAtivacao = 0;
+				for(var p in pesos_neuronio){
+					var variavel = pesos_neuronio[p];
+					if(pesos_sao_entradas){
+						potencialDeAtivacao += entradas[variavel].valor * neuronio.pesos[variavel];
+					}else{
+						potencialDeAtivacao += neuronio_func(neuronios[variavel], b, entradas, neuronios) * neuronio.pesos[variavel];
+					}
+				}
+				potencialDeAtivacao -= neuronio.limiar;
+				return neuronio.funcao(potencialDeAtivacao, b);
 			}
 
 			function logistica(u, b){
@@ -76,6 +154,10 @@
 
 			function tangenteHiperbolica(u, b){
 				return (1-Math.pow(Math.E, u*b*-1))/(1+Math.pow(Math.E, u*b*-1));
+			}
+
+			function degrau(u){
+				return u >= 0 ? 1 : 0;
 			}
 
 			function getEntradaString(entradas){
@@ -93,6 +175,10 @@
 				ret = ret.substr('function '.length);
 				ret = ret.substr(0, ret.indexOf('('));
 				return ret;
+			}
+
+			function getRandomNumber(min, max) {
+			    return parseFloat((Math.random() * (max - min) + min).toFixed(3));
 			}
 
 			function print (title, valoresX, valoresY) {
@@ -140,21 +226,17 @@
 		<script src="./js/highcharts.js"></script>
 		<script src="./js/modules/exporting.js"></script>
 
-		<h1>Lista de Exercícios 01 - Questão 02</h1>
+		<h1>Lista de Exercícios 02</h1>
 		<ul>
-			<li>Letra:</li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.1}}, 0, logistica, 20, 1, 'A');">A</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.5}}, 0, logistica, 20, 1, 'B');">B</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.9}}, 0, logistica, 20, 1, 'C');">C</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.1}}, 0, tangenteHiperbolica, 20, 1, 'D');">D</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.5}}, 0, tangenteHiperbolica, 20, 1, 'E');">E</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.9}}, 0, tangenteHiperbolica, 20, 1, 'F');">F</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.1}, x2: {min: 0, max: 1, peso: 0.7}}, 0, logistica, 20, 1, 'G');">G</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.5}, x2: {min: 0, max: 1, peso: 0.5}}, 0, logistica, 20, 1, 'H');">H</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.7}, x2: {min: 0, max: 1, peso: 0.1}}, 0, logistica, 20, 1, 'I');">I</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.1}, x2: {min: 0, max: 1, peso: 0.7}}, 0.25, logistica, 20, 1, 'J');">J</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.5}, x2: {min: 0, max: 1, peso: 0.5}}, 0.25, logistica, 20, 1, 'K');">K</a></li>
-			<li><a href="#" onclick="neuronio({x1: {min: 0, max: 1, peso: 0.7}, x2: {min: 0, max: 1, peso: 0.1}}, 0.25, logistica, 20, 1, 'L');">L</a></li>
+			<li>Questão:</li>
+			<li><a href="#" onclick="RNA_exec(
+				{
+					x1: null, 
+					x2: null
+				}, 
+				{
+					y1: {pesos: {x1: null, x2: null}, limiar: null, funcao: logistica, saida: true}
+				}, 20, 1, '1) ');">1</a></li>
 		</ul>
 
 		<div id="container" style="min-width: 310px; height: 400px; margin: 30px auto;"></div>
