@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-		<title>RNA</title>
+		<title>Perceptron</title>
 		
 		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
 		<script type="text/javascript" src="http://www.google.com/jsapi"></script>
@@ -45,255 +45,198 @@
 		</style>
 
 		<script type="text/javascript">
+			//http://stackoverflow.com/questions/8238407/how-to-parse-excel-file-in-javascript-html5
+			//http://codetheory.in/parse-read-excel-files-xls-xlsx-javascript/
 
-			var MIN = 0, MAX = 1;
+			function Perceptron(pesos, fnAtivacao){
+				this.pesos = pesos;
+				this.fnAtivacao = fnAtivacao;
+			}
 
-			function RNA_exec(entradas, neuronios, pontosDisc, b, descricao){
-				var neuronios_array_nomes = Object.keys(neuronios);
+			Perceptron.prototype.calc = function(entradas, pesos, funcao){
+				var u = 0, dif;
+				for(var i = 0; i < entradas.length; i++){
+					dif = parseFloat((entradas[i] * pesos[i]).toFixed(10));
+					u += dif;
+				}
+				return funcao.call(this, u);
+			}
 
-				//discretizar valores das entradas
-				var valores_entrada = [], 
-					valores_variacao = (MAX - MIN) / pontosDisc;
-				for(var i = 0; i <= pontosDisc; i++){
-					valores_entrada.push(parseFloat((valores_variacao * i).toFixed(4)));
+			Perceptron.prototype.trainning = function(pesosIniciais, taxaAprendizagem, amostras) {
+				//tolerancia para o numero de epocas
+				var max = 100;
+				var aprendizagem = {};
+
+				var epoca = 0;
+				this.pesos = [];
+
+				for(var i in pesosIniciais){
+					this.pesos.push(pesosIniciais[i]);
 				}
 
-				//iterar sobre as entradas, de forma que cada uma seja executado pela rede neural
-				var entradas_array_nomes = Object.keys(entradas), 
-					entradas_count = entradas_array_nomes.length,
-					entradas_computadas = [];
-				for(var e1 in entradas_array_nomes){
-					for(var v1 in valores_entrada){
-						var entrada_nome1 = entradas_array_nomes[e1], 
-							entrada1 = entradas[entrada_nome1],
-							valor1 = valores_entrada[v1];
-						
-						for(var e2 in entradas_array_nomes){
-							
-							if(e2 != e1){
-								for(var v2 in valores_entrada){
-									var entrada_nome2 = entradas_array_nomes[e2],
-										entrada2 = entradas[entrada_nome2],
-										valor2 = valores_entrada[v2];
-
-										if(entradas_computadas.indexOf(entrada_nome1+valor1+entrada_nome2+valor2) == -1){
-											entradas_computadas.push(entrada_nome1+valor1+entrada_nome2+valor2);
-											entradas_computadas.push(entrada_nome2+valor2+entrada_nome1+valor1);
-											
-											//entradas com seus valores
-											var ent = {};
-											ent[entrada_nome1] = {valor: valor1};
-											ent[entrada_nome2] = {valor: valor2};
-
-											//neuronios com seus pesos sinapticos e limiar
-											var neu = {};
-											for(var n in neuronios_array_nomes){
-												var neuronio_nome = neuronios_array_nomes[n],
-													neuronio = neuronios[neuronio_nome];
-
-												neuronio.limiar = getRandomNumber(-1,1);
-												for(var p in neuronio.pesos){
-													neuronio.pesos[p] = getRandomNumber(-1,1);
-												}
-
-												neu[neuronio_nome] = neuronio;
-											}
-											RNA(ent, neu, b);
-										}
-								}
+				do{
+					var hasErro = false;
+					for(var i = 0; i < amostras.length; i++){
+						var amostra = amostras[i];
+						var y = this.calc(amostra.entradas, this.pesos, this.fnAtivacao);
+						if(y != amostra.d){
+							for(var x = 0; x < this.pesos.length; x++){
+								this.pesos[x] = this.pesos[x] + (taxaAprendizagem * (amostra.d-y) * amostra.entradas[x]);
+								this.pesos[x] = parseFloat(this.pesos[x].toFixed(10));
+								hasErro = true;
 							}
-
 						}
 					}
-				}
-
-				//limpeza de memoria
-				entradas_computadas = [];
-
-				//print(questao + " -> " + functionName(funcao) + " - " + getEntradaString(entradas) + " - bias: " + bias, valoresX, valoresY);
-			}
-
-			function RNA (entradas, neuronios, b){
-				var entradas_array_nomes = Object.keys(entradas),
-					neuronios_array_nomes = Object.keys(neuronios),
-					neuronios_size = neuronios_array_nomes.length,
-					saidas = {};
-
-				for(var n in neuronios_array_nomes){
-					var neuronio_nome = neuronios_array_nomes[n],
-						neuronio = neuronios[neuronio_nome];
-					if(neuronio.saida == true){
-						saidas[neuronio_nome] = neuronio_func(neuronio, b, entradas, neuronios);
+					epoca++;
+					aprendizagem[epoca] = {
+						pesos: JSON.stringify(this.pesos),
+						erro: hasErro
 					}
-				}
+				}while(hasErro && epoca < max);
 
-				console.log(entradas, saidas);
+				this.printAprendizagem(aprendizagem);
+			};
+
+			Perceptron.prototype.printAprendizagem = function(aprendizagem) {
+				(function($){
+					$(document).ready(function() {
+						var html = '<table border="2"" style="display:table;margin:0 auto;"><tbody><tr><td>Época</td><td>Var. Livres e Erro</td>';
+						for(var i in aprendizagem){
+							html += "<tr><td>"+i+"</td><td>"+aprendizagem[i].pesos+" / Erro: "+aprendizagem[i].erro+"</td></tr>";
+						}
+						html+="</tbody></table>";
+						$("#aprendizagem-render").html(html);
+					});
+				})(jQuery);
 			}
 
-			function neuronio_func(neuronio, b, entradas, neuronios){
-				var entradas_array_nomes = Object.keys(entradas), 
-					pesos_neuronio = Object.keys(neuronio.pesos),
-					pesos_sao_entradas = true;
-
-				for(var p in pesos_neuronio){
-					pesos_sao_entradas = entradas_array_nomes.indexOf(pesos_neuronio[p]) != -1 ? pesos_sao_entradas && true : false;
-				}
-
-				var potencialDeAtivacao = 0;
-				for(var p in pesos_neuronio){
-					var variavel = pesos_neuronio[p];
-					if(pesos_sao_entradas){
-						potencialDeAtivacao += entradas[variavel].valor * neuronio.pesos[variavel];
-					}else{
-						potencialDeAtivacao += neuronio_func(neuronios[variavel], b, entradas, neuronios) * neuronio.pesos[variavel];
-					}
-				}
-				potencialDeAtivacao -= neuronio.limiar;
-				return neuronio.funcao(potencialDeAtivacao, b);
-			}
-
-			function logistica(u, b){
-				return 1/(1+Math.pow(Math.E, u*b*-1));
-			}
-
-			function tangenteHiperbolica(u, b){
-				return (1-Math.pow(Math.E, u*b*-1))/(1+Math.pow(Math.E, u*b*-1));
-			}
 
 			function degrau(u){
-				return u >= 0 ? 1 : 0;
+				return u < 0 ? 0 : 1;
+			}
+			function sinal(u){
+				return u < 0 ? -1 : 1;
 			}
 
-			function getEntradaString(entradas){
-				var ret = ""
-				var ents = Object.keys(entradas);
-				for(var e in ents){
-					var entrada = entradas[ents[e]];
-					ret += ents[e] + ": [" + entrada.min + ", " + entrada.max + "] - peso(" + ents[e] + "): " + entrada.peso + ";  ";
-				}
-				return ret;
-			}
+			var x = new Perceptron([0,0,0], degrau);
 
-			function functionName(fun) {
-				var ret = fun.toString();
-				ret = ret.substr('function '.length);
-				ret = ret.substr(0, ret.indexOf('('));
-				return ret;
-			}
 
-			function getRandomNumber(min, max) {
-			    return parseFloat((Math.random() * (max - min) + min).toFixed(3));
-			}
+			/* Amostras das questoes */
+			var amostra4 = [{
+				k: 1,
+				entradas: [-1, 0.2, 0.2],
+				d: 0
+			},{
+				k: 2,
+				entradas: [-1, 0.2, 0.8],
+				d: 0
+			},{
+				k: 3,
+				entradas: [-1, 0.8, 0.2],
+				d: 0
+			},{
+				k: 4,
+				entradas: [-1, 0.8, 0.8],
+				d: 1
+			}];
 
-			function print (title, valoresX, valoresY) {
-				var param = {
-					title: {
-			            text: title,
-			            x: -20 //center
-			        },
-			        chart: {
-			        	backgroundColor: "#F5F7FF"
-			        },
-			        xAxis: {
-			            categories: valoresX
-			        },
-			        yAxis: {
-			            title: {
-			                text: 'Valor de Saída (y)'
-			            },
-			            plotLines: [{
-			                value: 0,
-			                width: 1,
-			                color: '#808080'
-			            }]
-			        },
-			        legend: {
-			            layout: 'vertical',
-			            align: 'right',
-			            verticalAlign: 'middle',
-			            borderWidth: 0
-			        },
-			        series: [{
-			            name: 'Valor',
-			            data: valoresY,
-			            lineColor: '#4D527F',
-			            color: '#4D527F'
-			        }]
-			    };
-			    $(function () {
-				    $('#container').highcharts(param);
-				});
-			}
+			var amostra5 = [{
+				k: 1,
+				entradas: [-1, 0.49, 0.49],
+				d: 0
+			},{
+				k: 2,
+				entradas: [-1, 0.49, 0.51],
+				d: 1
+			},{
+				k: 3,
+				entradas: [-1, 0.51, 0.49],
+				d: 1
+			},{
+				k: 4,
+				entradas: [-1, 0.51, 0.51],
+				d: 1
+			}];
 
-			 var data = null;
-      var graph = null;
+			var amostra6 = [{
+				k: 1,
+				entradas: [-1, 0, 0],
+				d: 1
+			},{
+				k: 2,
+				entradas: [-1, 0, 1],
+				d: 1
+			},{
+				k: 3,
+				entradas: [-1, 1, 0],
+				d: 0
+			},{
+				k: 4,
+				entradas: [-1, 1, 1],
+				d: 1
+			}];
 
-      google.load("visualization", "1");
-
-      // Set callback to run when API is loaded
-      google.setOnLoadCallback(drawVisualization);
-
-      function custom(x, y) {
-        return Math.sin(x/50) * Math.cos(y/50) * 50 + 50;
-      }
-
-      // Called when the Visualization API is loaded.
-      function drawVisualization() {
-        // Create and populate a data table.
-        data = new google.visualization.DataTable();
-        data.addColumn('number', 'x');
-        data.addColumn('number', 'y');
-        data.addColumn('number', 'value');
-
-        // create some nice looking data with sin/cos
-        var steps = 25;  // number of datapoints will be steps*steps
-        var axisMax = 314;
-        axisStep = axisMax / steps;
-        for (var x = 0; x < axisMax; x+=axisStep) {
-          for (var y = 0; y < axisMax; y+=axisStep) {
-            var value = custom(x,y);
-            data.addRow([x, y, value]);
-          }
-        }
-
-        // specify options
-        options = {width:  "400px",
-                   height: "400px",
-                   style: "surface",
-                   showPerspective: true,
-                   showGrid: true,
-                   showShadow: false,
-                   keepAspectRatio: true,
-                   verticalRatio: 0.5
-                   };
-
-        // Instantiate our graph object.
-        graph = new links.Graph3d(document.getElementById('mygraph'));
-
-        // Draw our graph with the created data and options
-        graph.draw(data, options);
-      }
+			var amostra7 = [{
+				k: 1,
+				entradas: [-1, 0.4, 0.4],
+				d: 1
+			},{
+				k: 2,
+				entradas: [-1, 0.4, 0.6],
+				d: 0
+			},{
+				k: 3,
+				entradas: [-1, 0.6, 0.4],
+				d: 0
+			},{
+				k: 4,
+				entradas: [-1, 0.6, 0.6],
+				d: 1
+			}];
 		</script>
 	</head>
 	<body>
 		<script src="./js/highcharts.js"></script>
 		<script src="./js/modules/exporting.js"></script>
 
-		<h1>Lista de Exercícios 02</h1>
+		<h1>Perceptron</h1>
 		<ul>
-			<li>Questão:</li>
-			<li><a href="#" onclick="RNA_exec(
-				{
-					x1: null, 
-					x2: null
-				}, 
-				{
-					y1: {pesos: {x1: null, x2: null}, limiar: null, funcao: logistica, saida: true}
-				}, 20, 1, '1) ');">1</a></li>
+			<li>Questão 4:</li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.01, amostra4);">a</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.1, amostra4);">b</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.5, amostra4);">c</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.75, amostra4);">d</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.9, amostra4);">e</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 1, amostra4);">f</a></li>
 		</ul>
-
+		<ul>
+			<li>Questão 5:</li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.001, amostra5);">a</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.1, amostra5);">b</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.5, amostra5);">c</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.75, amostra5);">d</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.9, amostra5);">e</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 1, amostra5);">f</a></li>
+		</ul>
+		<ul>
+			<li>Questão 6:</li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.001, amostra6);">a</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.1, amostra6);">b</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.5, amostra6);">c</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.75, amostra6);">d</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.9, amostra6);">e</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 1, amostra6);">f</a></li>
+		</ul>
+		<ul>
+			<li>Questão 7:</li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.001, amostra7);">a</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.1, amostra7);">b</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.5, amostra7);">c</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.75, amostra7);">d</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 0.9, amostra7);">e</a></li>
+			<li><a href="#" onclick="x.trainning([0,0,0], 1, amostra7);">f</a></li>
+		</ul>
+		<div id="aprendizagem-render"></div>
 		<div id="container" style="min-width: 310px; height: 400px; margin: 30px auto;"></div>
-
-		<div id="mygraph"></div>
 	</body>
 </html>
